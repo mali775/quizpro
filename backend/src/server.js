@@ -5,17 +5,22 @@ const routes  = require('./routes')
 const { errorHandler, notFound } = require('./middleware/errorHandler')
 
 const app  = express()
-const PORT = process.env.PORT || 6000
+// Render-де PORT автоматты түрде 10000 болады, бірақ біз резерв қалдырамыз
+const PORT = process.env.PORT || 10000
 
-// ── Middleware ────────────────────────────────────────────────────────────────
+// ── Middleware (CORS ТҮЗЕТІЛГЕН НҰСҚАСЫ) ──────────────────────────────────────
 app.use(cors({
-  origin:      process.env.CLIENT_URL || 'http://localhost:3000',
+  // '*' барлық сайтқа рұқсат береді, бұл қателерді жоюдың ең сенімді жолы
+  origin: '*', 
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }))
+
 app.use(express.json({ limit: '2mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-// ── Request logger (dev) ──────────────────────────────────────────────────────
+// ── Request logger (тек дайындау кезінде) ──────────────────────────────────────
 if (process.env.NODE_ENV !== 'production') {
   app.use((req, _res, next) => {
     console.log(`→ ${req.method} ${req.path}`)
@@ -23,7 +28,7 @@ if (process.env.NODE_ENV !== 'production') {
   })
 }
 
-// ── Health check ──────────────────────────────────────────────────────────────
+// ── Health check (Сервер тірі екенін тексеру үшін) ──────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date() }))
 
 // ── API routes ────────────────────────────────────────────────────────────────
@@ -34,10 +39,11 @@ app.use(notFound)
 app.use(errorHandler)
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n🚀 QuizPro backend running on http://localhost:${PORT}`)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🚀 QuizPro backend running!`)
+  console.log(`   Port        : ${PORT}`)
   console.log(`   Environment : ${process.env.NODE_ENV || 'development'}`)
-  console.log(`   Client URL  : ${process.env.CLIENT_URL || 'http://localhost:3000'}\n`)
+  console.log(`   CORS        : Enabled for all origins (*)\n`)
 })
 
 module.exports = app
